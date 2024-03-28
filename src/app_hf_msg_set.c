@@ -15,8 +15,10 @@
 #include "argtable3/argtable3.h"
 #include "esp_log.h"
 
+
 // if you want to connect a specific device, add it's bda here
 esp_bd_addr_t hf_peer_addr = {0x50, 0xC2, 0x75, 0xF0, 0x45, 0xA2};
+
 void hf_msg_show_usage(void)
 {
     printf("########################################################################\n");

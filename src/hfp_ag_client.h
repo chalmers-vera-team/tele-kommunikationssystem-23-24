@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma once
 
 #include <stdio.h>
@@ -10,3 +14,7 @@
 #define BT_HF_AG_TAG    "HF_AG_MAIN"
 
 void hfp_ag_init(void);
+
+#ifdef __cplusplus
+}
+#endif

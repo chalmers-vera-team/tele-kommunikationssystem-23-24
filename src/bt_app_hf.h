@@ -13,7 +13,7 @@
 #include "esp_hf_ag_api.h"
 #include "esp_bt_defs.h"
 
-esp_bd_addr_t hf_peer_addr; // Declaration of peer device bdaddr
+inline esp_bd_addr_t hf_peer_addr; // Declaration of peer device bdaddr
 
 #define BT_HF_TAG               "BT_APP_HF"
 

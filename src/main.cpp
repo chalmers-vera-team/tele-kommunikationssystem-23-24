@@ -157,12 +157,18 @@ void setup() {
     // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
     gsm_modem_init();
 
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
     // Initialize ADC with I2S to write data from ADC DMA buffer to 
     // bluedroids RingBuffer (which sends it to connected bluetooth client).
     adc_i2s_init();
 
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
     // Initialize the bluedroid unit and make the audio gateway ready to start sending data.
     hfp_ag_init();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
     // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
