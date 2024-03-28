@@ -161,9 +161,9 @@ void setup() {
 
     // Initialize ADC with I2S to write data from ADC DMA buffer to 
     // bluedroids RingBuffer (which sends it to connected bluetooth client).
-    adc_i2s_init();
+    // adc_i2s_init();
 
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // Initialize the bluedroid unit and make the audio gateway ready to start sending data.
     hfp_ag_init();
