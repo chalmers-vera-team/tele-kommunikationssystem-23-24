@@ -1,8 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -14,8 +16,7 @@
 #include "esp_log.h"
 
 // if you want to connect a specific device, add it's bda here
-esp_bd_addr_t hf_peer_addr = {0x50, 0xC2, 0x75, 0xF0, 0x45,0xA2};
-
+esp_bd_addr_t hf_peer_addr = {0x50, 0xC2, 0x75, 0xF0, 0x45, 0xA2};
 void hf_msg_show_usage(void)
 {
     printf("########################################################################\n");
@@ -60,28 +61,28 @@ HF_CMD_HANDLER(help)
 HF_CMD_HANDLER(conn)
 {
     printf("Connect.\n");
-    esp_hf_ag_slc_connect(hf_peer_addr);
+    esp_bt_hf_connect(hf_peer_addr);
     return 0;
 }
 
 HF_CMD_HANDLER(disc)
 {
     printf("Disconnect\n");
-    esp_hf_ag_slc_disconnect(hf_peer_addr);
+    esp_bt_hf_disconnect(hf_peer_addr);
     return 0;
 }
 
 HF_CMD_HANDLER(conn_audio)
 {
     printf("Connect Audio\n");
-    esp_hf_ag_audio_connect(hf_peer_addr);
+    esp_bt_hf_connect_audio(hf_peer_addr);
     return 0;
 }
 
 HF_CMD_HANDLER(disc_audio)
 {
     printf("Disconnect Audio\n");
-    esp_hf_ag_audio_disconnect(hf_peer_addr);
+    esp_bt_hf_disconnect_audio(hf_peer_addr);
     return 0;
 }
 
@@ -89,14 +90,14 @@ HF_CMD_HANDLER(disc_audio)
 HF_CMD_HANDLER(vra_on)
 {
     printf("Start Voice Recognition.\n");
-    esp_hf_ag_vra_control(hf_peer_addr,1);
+    esp_bt_hf_vra(hf_peer_addr,1);
     return 0;
 }
 //AT+BVRA
 HF_CMD_HANDLER(vra_off)
 {
     printf("Stop Voicer Recognition.\n");
-    esp_hf_ag_vra_control(hf_peer_addr,0);
+    esp_bt_hf_vra(hf_peer_addr,0);
     return 0;
 }
 
@@ -120,7 +121,7 @@ HF_CMD_HANDLER(volume_control)
         return 1;
     }
     printf("Volume Update\n");
-    esp_hf_ag_volume_control(hf_peer_addr, target, volume);
+    esp_bt_hf_volume_control(hf_peer_addr, target, volume);
     return 0;
 }
 
@@ -148,7 +149,7 @@ HF_CMD_HANDLER(ind_change)
     if (sscanf(argv[3], "%d", &ntk_state) != 1 ||
         (ntk_state != ESP_HF_NETWORK_STATE_NOT_AVAILABLE &&
         ntk_state != ESP_HF_NETWORK_STATE_AVAILABLE)) {
-        printf("Invalid argument for network state %s\n", argv[3]);
+        printf("Invalid argument for netwrok state %s\n", argv[3]);
         return 1;
     }
     if (sscanf(argv[4], "%d", &signal) != 1 ||
@@ -157,10 +158,7 @@ HF_CMD_HANDLER(ind_change)
         return 1;
     }
     printf("Device Indicator Changed!\n");
-    esp_hf_ag_ciev_report(hf_peer_addr, ESP_HF_IND_TYPE_CALL, call_state);
-    esp_hf_ag_ciev_report(hf_peer_addr, ESP_HF_IND_TYPE_CALLSETUP, call_setup_state);
-    esp_hf_ag_ciev_report(hf_peer_addr, ESP_HF_IND_TYPE_SERVICE, ntk_state);
-    esp_hf_ag_ciev_report(hf_peer_addr, ESP_HF_IND_TYPE_SIGNAL, signal);
+    esp_bt_hf_indchange_notification(hf_peer_addr, call_state, call_setup_state, ntk_state, signal);
     return 0;
 }
 
@@ -186,7 +184,7 @@ HF_CMD_HANDLER(cme_err)
     }
 
     printf("Send CME Error.\n");
-    esp_hf_ag_cmee_send(hf_peer_addr,response_code,error_code);
+    esp_bt_hf_cmee_response(hf_peer_addr,response_code,error_code);
     return 0;
 }
 
@@ -194,7 +192,7 @@ HF_CMD_HANDLER(cme_err)
 HF_CMD_HANDLER(ir_on)
 {
     printf("Enable Voicer Recognition.\n");
-    esp_hf_ag_bsir(hf_peer_addr,1);
+    esp_bt_hf_bsir(hf_peer_addr,1);
     return 0;
 }
 
@@ -202,7 +200,7 @@ HF_CMD_HANDLER(ir_on)
 HF_CMD_HANDLER(ir_off)
 {
     printf("Disable Voicer Recognition.\n");
-    esp_hf_ag_bsir(hf_peer_addr,0);
+    esp_bt_hf_bsir(hf_peer_addr,0);
     return 0;
 }
 
@@ -211,7 +209,7 @@ HF_CMD_HANDLER(ac)
 {
     printf("Answer Call from AG.\n");
     char *number = {"123456"};
-    esp_hf_ag_answer_call(hf_peer_addr,1,0,1,1,number,0);
+    esp_bt_hf_answer_call(hf_peer_addr,1,0,1,1,number,0);
     return 0;
 }
 
@@ -220,7 +218,7 @@ HF_CMD_HANDLER(rc)
 {
     printf("Reject Call from AG.\n");
     char *number = {"123456"};
-    esp_hf_ag_reject_call(hf_peer_addr,0,0,0,0,number,0);
+    esp_bt_hf_reject_call(hf_peer_addr,0,0,0,0,number,0);
     return 0;
 }
 
@@ -229,7 +227,7 @@ HF_CMD_HANDLER(end)
 {
     printf("End Call from AG.\n");
     char *number = {"123456"};
-    esp_hf_ag_end_call(hf_peer_addr,0,0,0,0,number,0);
+    esp_bt_hf_end_call(hf_peer_addr,0,0,0,0,number,0);
     return 0;
 }
 
@@ -240,7 +238,7 @@ HF_CMD_HANDLER(d)
         printf("Insufficient number of arguments");
     } else {
         printf("Dial number %s\n", argv[1]);
-        esp_hf_ag_out_call(hf_peer_addr,1,0,1,2,argv[1],0);
+        esp_bt_hf_out_call(hf_peer_addr,1,0,1,2,argv[1],0);
     }
     return 0;
 }

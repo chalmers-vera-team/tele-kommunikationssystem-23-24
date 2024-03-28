@@ -1,8 +1,6 @@
-/*
- * SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,10 +21,8 @@
 #include "bt_app_hf.h"
 #include "gpio_pcm_config.h"
 #include "esp_console.h"
-#include "app_hf_msg_set.h"
+#include "app_hf_msg_set.h" 
 #include "hfp_ag_client.h"
-#include <Arduino.h>
-
 
 /* event for handler "hf_ag_hdl_stack_up */
 enum {
@@ -42,13 +38,13 @@ static void bt_hf_hdl_stack_evt(uint16_t event, void *p_param)
         case BT_APP_EVT_STACK_UP:
         {
             /* set up device name */
-            char *dev_name = "ESP-T-CALL-V1.4";
+            char *dev_name = "ESP_HFP_AG";
             esp_bt_dev_set_device_name(dev_name);
 
-            esp_hf_ag_register_callback(bt_app_hf_cb);
+            esp_bt_hf_register_callback(bt_app_hf_cb);
 
             // init and register for HFP_AG functions
-            esp_hf_ag_init();
+            esp_bt_hf_init(hf_peer_addr);
 
             /*
             * Set default parameters for Legacy Pairing
@@ -118,10 +114,9 @@ void hfp_ag_init(void)
     app_gpio_aec_io_cfg();
 #endif /* ACOUSTIC_ECHO_CANCELLATION_ENABLE */
 
-    
 
-    /* Used before for helping user debuggning and testing. Created a handle for the terminal to interact with (i think)? */
 
+    /* Uncomment to enable terminal debugging */
     // esp_console_repl_t *repl = NULL;
     // esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
     // esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
@@ -144,3 +139,8 @@ void hfp_ag_init(void)
     // // start console REPL
     // ESP_ERROR_CHECK(esp_console_start_repl(repl));
 }
+
+
+#ifdef __cplusplus
+}
+#endif

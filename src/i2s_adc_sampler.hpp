@@ -1,4 +1,4 @@
-#include <ADCSampler.h>
+#include "i2s_sampler/ADCSampler.h"
 
 // Settings for DMA
 const int SAMPLE_RATE = 16000;
@@ -10,12 +10,12 @@ const int SAMPLE_SIZE = 16384;
 
 /*  @brief Function to send data to the bluetooth device, should not be used. Use adcWriterTask instead to send the data.
 */  
-void send_data(){}
+void send_data();
 
 /*  @brief Task to write adc data from DMA buffer to bluetooth device, should not be used.
 */
-void adc_writer_task(void *param){}
+void adc_writer_task(void *param);
 
-/*  @brief Task to initialize the ADC. This also creates the adc_writer_task Task for freeRTOS to handle. Run this as a task to start the ADC DMA sampling to the bluetooth device.
+/*  @brief Function to initialize the ADC with i2s. This also creates the adc_writer_task Task for freeRTOS to handle. Run this as a task to start the ADC DMA sampling to the bluetooth device.
 */
-void adc_init_task(void *param){}
+void adc_i2s_init();

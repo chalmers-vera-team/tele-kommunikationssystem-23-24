@@ -3,10 +3,10 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <driver/gpio.h>
-#include "sdkconfig.h"
 #include <Arduino.h>
+#include "hfp_ag_client/hfp_ag_client.h"
 #include "i2s_adc_sampler.hpp"
-#include "hfp_ag_client.h"
+#include "sdkconfig.h"
 
 // Our T-CALL V1.4 Development Board
 #define SIM800H_IP5306_VERSION_20160721
@@ -157,16 +157,16 @@ void setup() {
     // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
     gsm_modem_init();
 
-    // Creates the ADC DMA task that will write data from ADC to bluetooth device.
-    adc_init_task();
+    // Initialize ADC with I2S to write data from ADC DMA buffer to 
+    // bluedroids RingBuffer (which sends it to connected bluetooth client).
+    adc_i2s_init();
+
+    // Initialize the bluedroid unit and make the audio gateway ready to start sending data.
+    hfp_ag_init();
 
     // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
     // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
     xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL);
-
-    
-    // Initialize the bluetooth client to read from ADC DMA buffer
-    hfp_ag_init();
 }
 
 // Super loop is not utilized, using freeRTOS instead.

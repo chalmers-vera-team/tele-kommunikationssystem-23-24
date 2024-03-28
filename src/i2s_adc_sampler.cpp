@@ -16,7 +16,7 @@ i2s_config_t adcI2SConfig = {
     .tx_desc_auto_clear = false,
     .fixed_mclk = 0};
 
-void send_data()
+void send_data(int *param)
 {
   // send data off to the bluetooth
 }
@@ -33,14 +33,15 @@ void adc_writer_task(void *param)
     while (true)
     {
         int samples_read = sampler->read(samples, SAMPLE_SIZE);
-        send_data();
+
+        send_data(&samples_read);
     }
     // Should never reach this but just in case...
     vTaskDelete(NULL);
 }
 
 
-void adc_init_task(){
+void adc_i2s_init(){
     // input from analog signal
     // internal analog to digital converter sampling using i2s
     // create our samplers
