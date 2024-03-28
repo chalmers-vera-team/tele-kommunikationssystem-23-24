@@ -1,4 +1,4 @@
-#include "i2s_sampler/ADCSampler.h"
+#include "ADCSampler.h"
 
 // Settings for DMA
 const int SAMPLE_RATE = 16000;

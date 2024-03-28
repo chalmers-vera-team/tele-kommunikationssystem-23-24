@@ -4,7 +4,7 @@
 #include <freertos/task.h>
 #include <driver/gpio.h>
 #include <Arduino.h>
-#include "hfp_ag_client/hfp_ag_client.h"
+#include "hfp_ag_client.h"
 #include "i2s_adc_sampler.hpp"
 #include "sdkconfig.h"
 
