@@ -133,8 +133,10 @@ void gsm_modem_init()
 }
 
 
+
 // setup() and loop() run in their own task with priority 1 in core 1 on ESP32 arduino
-void setup() {
+void setup() 
+{
     // Set console baud rate
     SerialMon.begin(115200);
 
@@ -174,7 +176,6 @@ void setup() {
     // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
     xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL);
 }
-
 // Super loop is not utilized, using freeRTOS instead.
 void loop(){}
 

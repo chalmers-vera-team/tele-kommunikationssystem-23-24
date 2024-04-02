@@ -2,6 +2,7 @@
 extern "C" {
 #endif
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -77,8 +78,6 @@ void hfp_ag_init(void)
         ret = nvs_flash_init();
     }
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
     ESP_ERROR_CHECK(ret);
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
     
@@ -142,7 +141,6 @@ void hfp_ag_init(void)
     // // start console REPL
     // ESP_ERROR_CHECK(esp_console_start_repl(repl));
 }
-
 
 #ifdef __cplusplus
 }
