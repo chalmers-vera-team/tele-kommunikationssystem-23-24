@@ -62,6 +62,7 @@ TinyGsm modem(SerialAT);
 #define CALL_TARGET "+46705605783"
 // NOTE, vera sim call number: +46732074304
 
+void test_func(void);
 
 // Task for our GSM module that will be added to tasks for rtos to handle
 // rtos (real time operating system) allows tasks to be run at different prioritization levels on the 2 cores of the ESP32.
@@ -197,8 +198,9 @@ extern "C" {
     }
 
 
-    void arduinoTask(void *pvParameter) {
-        
+    void arduino_task(void *pvParameter) {
+        test_func();
+
         vTaskDelete(NULL);
     }
 
@@ -248,35 +250,46 @@ extern "C" {
         app_gpio_aec_io_cfg();
     #endif /* ACOUSTIC_ECHO_CANCELLATION_ENABLE */
 
-        esp_console_repl_t *repl = NULL;
-        esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
-        esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
-        repl_config.prompt = "hfp_ag>";
-
-        // init console REPL environment
-        ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
-
-        /* Register commands */
-        register_hfp_ag();
-        printf("\n ==================================================\n");
-        printf(" |       Steps to test hfp_ag                     |\n");
-        printf(" |                                                |\n");
-        printf(" |  1. Print 'help' to gain overview of commands  |\n");
-        printf(" |  2. Setup a service level connection           |\n");
-        printf(" |  3. Run hfp_ag to test                         |\n");
-        printf(" |                                                |\n");
-        printf(" =================================================\n\n");
-
-        // start console REPL
-        ESP_ERROR_CHECK(esp_console_start_repl(repl));
-
         // initialize arduino library before we start the tasks
         initArduino();
 
-        xTaskCreate(&arduinoTask, "arduino_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+        xTaskCreate(&arduino_task, "arduino_task", 4096, NULL, 5, NULL);
     }
 }
 
+void test_func(void)
+{
+    // Set console baud rate
+    SerialMon.begin(115200);
+
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    // Start power management
+    if (setupPMU() == false) {
+        SerialMon.println("Setting power error");
+    }
+
+    // Some start operations
+    setupModem();
+
+    // Set GSM module baud rate and UART pins
+    SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    // Initialize ADC with I2S to write data from ADC DMA buffer to 
+    // bluedroids RingBuffer (which sends it to connected bluetooth client).
+    adc_i2s_init();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    
+    // Create the gsm modem init task with priority 1 and stack size 2048 bytes.
+    // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
+    gsm_modem_init();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
+    // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
+    xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL); 
+}
 
 // setup() and loop() run in their own task with priority 1 in core 1 on ESP32 arduino
 // void setup() 
