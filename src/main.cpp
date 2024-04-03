@@ -1,17 +1,13 @@
+extern "C" {
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <driver/gpio.h>
-#include <Arduino.h>
-#include "hfp_ag_client.h"
-#include "i2s_adc_sampler.hpp"
 #include "sdkconfig.h"
-
-// New from other file
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_system.h"
@@ -26,7 +22,10 @@
 #include "gpio_pcm_config.h"
 #include "esp_console.h"
 #include "app_hf_msg_set.h"
-
+#include "app_hf_msg_prs.h"
+}
+#include <Arduino.h>
+#include "i2s_adc_sampler.hpp"
 
 // Our T-CALL V1.4 Development Board
 #define SIM800H_IP5306_VERSION_20160721
@@ -61,8 +60,7 @@ TinyGsm modem(SerialAT);
 // Set phone number to call, not currently used. Call the gsm module instead (to prevent cost for the vera sim card)
 #define CALL_TARGET "+46705605783"
 // NOTE, vera sim call number: +46732074304
-
-void test_func(void);
+#define BT_HF_AG_TAG    "HF_AG_MAIN"
 
 // Task for our GSM module that will be added to tasks for rtos to handle
 // rtos (real time operating system) allows tasks to be run at different prioritization levels on the 2 cores of the ESP32.
@@ -154,6 +152,41 @@ void gsm_modem_init()
 }
 
 
+void arduino_setup(void)
+{
+    // Set console baud rate
+    SerialMon.begin(115200);
+
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    // Start power management
+    if (setupPMU() == false) {
+        SerialMon.println("Setting power error");
+    }
+
+    // Some start operations
+    setupModem();
+
+    // Set GSM module baud rate and UART pins
+    SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    // Initialize ADC with I2S to write data from ADC DMA buffer to 
+    // bluedroids RingBuffer (which sends it to connected bluetooth client).
+    adc_i2s_init();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    
+    // Create the gsm modem init task with priority 1 and stack size 2048 bytes.
+    // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
+    gsm_modem_init();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
+    // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
+    xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL); 
+}
+
+
 extern "C" {
     enum {
         BT_APP_EVT_STACK_UP = 0,
@@ -197,15 +230,7 @@ extern "C" {
         }
     }
 
-
-    void arduino_task(void *pvParameter) {
-        test_func();
-
-        vTaskDelete(NULL);
-    }
-
-    void app_main()
-    {
+    void hfp_ag_init(void){
         /* Initialize NVS — it is used to store PHY calibration data */
         esp_err_t ret = nvs_flash_init();
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
@@ -249,93 +274,21 @@ extern "C" {
     #if ACOUSTIC_ECHO_CANCELLATION_ENABLE
         app_gpio_aec_io_cfg();
     #endif /* ACOUSTIC_ECHO_CANCELLATION_ENABLE */
+    }
+
+    void app_main()
+    {
+        // initialize the bluetooth modem in hands free profile, as an audio gateway
+        hfp_ag_init();
 
         // initialize arduino library before we start the tasks
         initArduino();
 
-        xTaskCreate(&arduino_task, "arduino_task", 4096, NULL, 5, NULL);
+        // run code in setup() that arduino would normally do.
+        arduino_setup();
     }
 }
 
-void test_func(void)
-{
-    // Set console baud rate
-    SerialMon.begin(115200);
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-
-    // Start power management
-    if (setupPMU() == false) {
-        SerialMon.println("Setting power error");
-    }
-
-    // Some start operations
-    setupModem();
-
-    // Set GSM module baud rate and UART pins
-    SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    // Initialize ADC with I2S to write data from ADC DMA buffer to 
-    // bluedroids RingBuffer (which sends it to connected bluetooth client).
-    adc_i2s_init();
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    
-    // Create the gsm modem init task with priority 1 and stack size 2048 bytes.
-    // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
-    gsm_modem_init();
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
-    // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
-    xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL); 
-}
-
-// setup() and loop() run in their own task with priority 1 in core 1 on ESP32 arduino
-// void setup() 
-// {
-//     // Set console baud rate
-//     SerialMon.begin(115200);
-
-//     vTaskDelay(10 / portTICK_PERIOD_MS);
-
-//     // Start power management
-//     if (setupPMU() == false) {
-//         SerialMon.println("Setting power error");
-//     }
-
-//     // Some start operations
-//     setupModem();
-
-//     // Set GSM module baud rate and UART pins
-//     SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
-
-//     vTaskDelay(6000 / portTICK_PERIOD_MS);
-
-//     // Create the gsm modem init task with priority 1 and stack size 2048 bytes.
-//     // Initializes the modem and creates the gsm_modem_task Task that handles a caller.
-//     gsm_modem_init();
-
-//     vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-//     // Initialize ADC with I2S to write data from ADC DMA buffer to 
-//     // bluedroids RingBuffer (which sends it to connected bluetooth client).
-//     // adc_i2s_init();
-
-//     vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-//     // Initialize the bluedroid unit and make the audio gateway ready to start sending data.
-//     hfp_ag_init();
-
-//     vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-//     // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
-//     // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
-//     xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL); 
-// }
-
-// // Super loop is not utilized, using freeRTOS instead.
-// void loop(){}
 
 
 
