@@ -174,8 +174,9 @@ void setup()
 
     // Create the gsm modem task with priority 0 and stack size 8192 bytes after init is completed. 
     // Priority 0 is to prevent watchdog from barking, task running when nothing else is running.
-    xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL);
+    xTaskCreate(gsm_modem_task, "gsm_modem_task", 8192, NULL, 0, NULL); 
 }
+
 // Super loop is not utilized, using freeRTOS instead.
 void loop(){}
 
