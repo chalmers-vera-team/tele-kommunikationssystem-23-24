@@ -198,6 +198,7 @@ extern "C" {
 
 
     void arduinoTask(void *pvParameter) {
+        
         vTaskDelete(NULL);
     }
 
