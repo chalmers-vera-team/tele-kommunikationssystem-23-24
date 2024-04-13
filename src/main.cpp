@@ -71,63 +71,61 @@ void gsm_modem_task(void *parameter)
     SerialAT.print("AT+CLIP=1\r\n");
     vTaskDelay(10000 / portTICK_PERIOD_MS);
 
-    bool res = false;
+    for(;;){
+        bool res = false;
 
-    // Start waiting for someone to call...
-    while(!res){
-        SerialMon.print("Waiting for caller...");
-        SerialMon.println();
+        // Start waiting for someone to call...
+        while(!res){
+            SerialMon.print("Waiting for caller...");
+            SerialMon.println();
 
-        String data;
-        while(SerialAT.available())
-        {
-            char x = SerialAT.read();
-            if(x == '\n' || x == '\r'){
-                if(data == "RING"){ // Looking for a caller notification from the GSM module
-                    res = modem.callAnswer();
+            String data;
+            while(SerialAT.available())
+            {
+                char x = SerialAT.read();
+                if(x == '\n' || x == '\r'){
+                    if(data == "RING"){ // Looking for a caller notification from the GSM module
+                        res = modem.callAnswer();
+                        break;
+                    }
+                    data = "";
+                }
+                else{
+                    data += x;
+                }
+            }
+
+            if (SerialMon.available()){
+                if (SerialMon.readString() == "Stop"){ // Stop waiting for caller
+                    SerialMon.println("Not waiting for caller.");
                     break;
                 }
-                data = "";
             }
-            else{
-                data += x;
-            }
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
-        if (SerialMon.available()){
-            if (SerialMon.readString() == "Stop"){ // Stop waiting for caller
-            SerialMon.println("Not waiting for caller.");
-            break;
-            }
-        }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        SerialMon.print("Answered:");
+        SerialMon.println(res ? "OK" : "fail");
 
-    SerialMon.print("Answered:");
-    SerialMon.println(res ? "OK" : "fail");
-
-    // If we connected to a caller, wait to hang up
-    if (res){
-        bool hangup = false;
-        while(hangup == false){
-            if (SerialMon.available()){
-                if (SerialMon.readString() == "Stop"){
-                SerialMon.print("Ending call.");
-                hangup = true;
+        // If we connected to a caller, wait to hang up
+        if (res){
+            bool hangup = false;
+            while(hangup == false){
+                if (SerialMon.available()){
+                    if (SerialMon.readString() == "Stop"){
+                        SerialMon.print("Ending call.");
+                        hangup = true;
+                    }
                 }
             }
+            res = modem.callHangup();
+            DBG("Hang up:", res ? "OK" : "fail");
         }
-        res = modem.callHangup();
-        DBG("Hang up:", res ? "OK" : "fail");
-    }
 
 
-    // Do nothing forevermore
-    SerialMon.print("Reached end of loop");
-    while (true) {
-        modem.maintain();
+        // Do nothing forevermore
+        SerialMon.print("Reached end of loop");
     }
-    vTaskDelete( NULL );
 }
 
 

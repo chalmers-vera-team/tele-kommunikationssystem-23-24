@@ -324,7 +324,7 @@ void bt_app_hf_cb(esp_hf_cb_event_t event, esp_hf_cb_param_t *param)
                 }
                 s_time_old = esp_timer_get_time();
                 esp_bt_hf_register_data_callback(bt_app_hf_incoming_cb, bt_app_hf_outgoing_cb);
-                /* Begin send esco data task */
+                /* Begin send eSCO data task */
                 bt_app_send_data();
             } else if (param->audio_stat.state == ESP_HF_AUDIO_STATE_DISCONNECTED) {
                 ESP_LOGI(BT_HF_TAG, "--ESP AG Audio Connection Disconnected.");
